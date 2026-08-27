@@ -25,6 +25,19 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto scrollbar-thin px-3 py-5 space-y-6">
+        <div>
+          <Link
+            href="/"
+            className={clsx(
+              "group flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors relative font-medium",
+              pathname === "/" ? "bg-white/10 text-white" : "text-navy-100/85 hover:bg-white/5 hover:text-white"
+            )}
+          >
+            {pathname === "/" && <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-brand-orange" />}
+            <span>Visão Geral</span>
+          </Link>
+        </div>
+
         {groupOrder.map((group) => (
           <div key={group}>
             <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-navy-100/50 mb-2">

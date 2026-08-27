@@ -34,6 +34,18 @@ npm run dev
 
 Abra http://localhost:3000
 
+## Login (senha simples)
+
+O painel pode ficar protegido por uma senha única, compartilhada com quem precisar acessar (não é login por usuário, é uma senha só, tipo "chave da sala").
+
+1. Defina `APP_PASSWORD` no `.env.local` (local) e nas variáveis de ambiente do projeto na Vercel.
+2. Pronto — qualquer pessoa que tentar abrir o link vai cair em `/login` primeiro.
+3. Se você **não** configurar `APP_PASSWORD`, o painel fica aberto sem senha (como está hoje).
+
+## Exportar / Imprimir
+
+Todo indicador tem um botão **Exportar** no canto superior direito. Ele abre a janela de impressão do navegador — dá pra imprimir de verdade ou escolher "Salvar como PDF" no destino. O menu lateral e os botões de edição somem automaticamente nessa versão, ficando só o conteúdo pra apresentação.
+
 ## Banco de dados (Neon — grátis)
 
 1. Crie uma conta em https://neon.tech e um projeto novo.
@@ -45,7 +57,7 @@ Abra http://localhost:3000
 
 1. Suba este projeto para um repositório no GitHub.
 2. Em https://vercel.com, "Add New Project" → selecione o repositório.
-3. Em "Environment Variables", adicione `DATABASE_URL` com a mesma string do Neon.
+3. Em "Environment Variables", adicione `DATABASE_URL` com a mesma string do Neon, e `APP_PASSWORD` se quiser proteger o painel com senha.
 4. Deploy. Pronto — link público para acessar de qualquer lugar (celular incluso).
 
 ## Identidade visual
@@ -59,8 +71,7 @@ O tema já está com a paleta branco/azul/laranja em `tailwind.config.ts` (token
 ## Próximos passos sugeridos
 
 - [ ] Validar as páginas com você, principalmente as 3 novas (Posições Diário, Seguro Contratado, Volumetria) — a estrutura de dados delas foi minha melhor leitura da planilha original, pode ter algum ajuste de campo
-- [ ] Botão de exportar a página atual como imagem/PDF (para substituir o "print da tela" que é usado hoje)
-- [ ] Login simples (se o painel for acessado por mais de uma pessoa e quiser controlar quem edita)
+- [ ] Se quiser controlar quem edita (login por pessoa, não senha única), dá pra evoluir para NextAuth ou Clerk
 
 ## Stack
 

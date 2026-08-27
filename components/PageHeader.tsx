@@ -4,9 +4,11 @@ interface PageHeaderProps {
   year: number;
 }
 
+import ExportButton from "@/components/ExportButton";
+
 export default function PageHeader({ title, objective, year }: PageHeaderProps) {
   return (
-    <header className="sticky top-0 z-10 bg-mist/90 backdrop-blur border-b border-navy-50 px-6 lg:px-10 py-5 flex flex-wrap items-start justify-between gap-4">
+    <header className="sticky top-0 z-10 bg-mist/90 backdrop-blur border-b border-navy-50 px-6 lg:px-10 py-5 flex flex-wrap items-start justify-between gap-4 print:static print:bg-white">
       <div className="max-w-2xl">
         <h1 className="font-display text-xl font-semibold text-navy-700">{title}</h1>
         {objective && (
@@ -16,9 +18,12 @@ export default function PageHeader({ title, objective, year }: PageHeaderProps) 
           </p>
         )}
       </div>
-      <div className="flex items-center gap-2 bg-white border border-navy-50 rounded-lg px-3 py-1.5 shadow-card">
-        <span className="text-xs text-slate-400">Ano</span>
-        <span className="font-display font-semibold text-navy-700">{year}</span>
+      <div className="flex items-center gap-2 print:hidden">
+        <div className="flex items-center gap-2 bg-white border border-navy-50 rounded-lg px-3 py-1.5 shadow-card">
+          <span className="text-xs text-slate-400">Ano</span>
+          <span className="font-display font-semibold text-navy-700">{year}</span>
+        </div>
+        <ExportButton />
       </div>
     </header>
   );

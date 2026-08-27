@@ -27,3 +27,37 @@ body {
 .scrollbar-thin::-webkit-scrollbar-thumb {
   @apply bg-navy-100 rounded-full;
 }
+
+/* Print / export as PDF — used by the "Exportar" button (window.print) */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+  body {
+    background: white;
+  }
+  aside {
+    display: none !important;
+  }
+  .lg\:pl-72 {
+    padding-left: 0 !important;
+  }
+  input,
+  select,
+  textarea {
+    border-color: #e2e8f0 !important;
+    color: black !important;
+  }
+  button:not(.keep-print) {
+    display: none !important;
+  }
+  .shadow-card {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+  section,
+  .panel,
+  table {
+    break-inside: avoid;
+  }
+}
