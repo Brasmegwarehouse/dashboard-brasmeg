@@ -24,16 +24,16 @@ export const indicators: IndicatorDef[] = [
 
   { slug: "ocupacao-pp", name: "Ocupação PP", group: "Ocupação", ready: true },
   { slug: "ocupacao-bl", name: "Ocupação BL", group: "Ocupação", ready: true },
-  { slug: "posicoes-ocupadas-diario", name: "Posições Ocupadas (diário)", group: "Ocupação", ready: false },
+  { slug: "posicoes-ocupadas-diario", name: "Posições Ocupadas (diário)", group: "Ocupação", ready: true },
 
   { slug: "faturamento-vs-orcado", name: "Faturamento vs Orçado", group: "Qualidade & Financeiro", ready: true },
   { slug: "indice-de-resultados", name: "Índice de Resultados", group: "Qualidade & Financeiro", ready: true },
   { slug: "digital-da-unidade", name: "Digital da Unidade", group: "Qualidade & Financeiro", ready: true },
   { slug: "acuracidade-estoque", name: "Acuracidade de Estoque", group: "Qualidade & Financeiro", ready: true },
   { slug: "inconformidades-operacionais", name: "Inconformidades Operacionais", group: "Qualidade & Financeiro", ready: true },
-  { slug: "seguro-contratado", name: "Seguro Contratado AG + Activas", group: "Qualidade & Financeiro", ready: false },
+  { slug: "seguro-contratado", name: "Seguro Contratado AG + Activas", group: "Qualidade & Financeiro", ready: true },
 
-  { slug: "volumetria", name: "Volumetria", group: "Análises", ready: false },
+  { slug: "volumetria", name: "Volumetria", group: "Análises", ready: true },
 ];
 
 export const groupOrder: IndicatorGroup[] = [
