@@ -68,9 +68,22 @@ O tema já está com a paleta branco/azul/laranja em `tailwind.config.ts` (token
 2. Em `components/Sidebar.tsx`, troque o bloco `BM` por `<img src="/logo.svg" className="h-9" />`.
 3. Se as cores exatas da marca forem diferentes das usadas aqui, me manda os hex codes (ou o próprio logo, que eu extraio) que eu ajusto os tokens em `tailwind.config.ts` — todo o app usa essas variáveis, então muda em um lugar só.
 
+## Comparativo com o ano anterior
+
+Todo indicador agora tem um seletor de **Ano** no canto superior direito (junto do botão Exportar). Ao trocar para 2025 na tela de **Base de Dados**, dá para digitar os números históricos daquele ano — depois disso, qualquer indicador visualizado em 2026 mostra automaticamente:
+- Uma linha tracejada no gráfico com a média de 2025
+- Nos cartões de KPI, o texto "Méd. 2026: X · Méd. 2025: Y" lado a lado
+
+Isso responde à pergunta que sempre aparece numa apresentação: "e comparado com o ano passado?" — sem precisar duplicar nenhuma tela.
+
+Quando 2027 começar, é só abrir `lib/indicators.ts` e adicionar `2027` na lista `availableYears` (e mudar `DEFAULT_YEAR` quando quiser que o painel abra em 2027 por padrão) — é a única mudança de código necessária, o resto do app já se adapta.
+
 ## Próximos passos sugeridos
 
 - [ ] Validar as páginas com você, principalmente as 3 novas (Posições Diário, Seguro Contratado, Volumetria) — a estrutura de dados delas foi minha melhor leitura da planilha original, pode ter algum ajuste de campo
+- [ ] Menu de navegação para celular (hoje só funciona em tela de desktop/tablet)
+- [ ] Editar o status de uma ação já criada no Plano de Ação (hoje só entra como "Não Iniciado")
+- [ ] Botão de exportar os números brutos em CSV
 - [ ] Se quiser controlar quem edita (login por pessoa, não senha única), dá pra evoluir para NextAuth ou Clerk
 
 ## Stack

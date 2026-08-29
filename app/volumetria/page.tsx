@@ -1,15 +1,15 @@
 import PageHeader from "@/components/PageHeader";
 import KpiCard from "@/components/KpiCard";
-import MonthlyBarChart from "@/components/MonthlyBarChart";
+import MonthlyBarChart, { ReferenceLineConfig } from "@/components/MonthlyBarChart";
 import MonthlyInputRow from "@/components/MonthlyInputRow";
 import NotesEditor from "@/components/NotesEditor";
 import ActionPlanTable from "@/components/ActionPlanTable";
-import { months } from "@/lib/indicators";
+import MonthPicker from "@/components/MonthPicker";
+import { months, availableYears, DEFAULT_YEAR } from "@/lib/indicators";
 import { getMetricsForYear, getMonthlyNotes, getActionPlan } from "@/lib/actions";
 
 export const dynamic = "force-dynamic";
 
-const YEAR = 2026;
 const INDICATOR = "volumetria";
 const PATH = "/volumetria";
 
@@ -28,32 +28,53 @@ const fields = [
   { label: "CIF Total de Entrada (R$)", key: "cif_entrada" },
 ];
 
-export default async function VolumetriaPage() {
-  const [rows, notesRows, actionRows] = await Promise.all([
-    getMetricsForYear(INDICATOR, YEAR),
-    getMonthlyNotes(INDICATOR, YEAR),
+export default async function VolumetriaPage({ searchParams }: { searchParams: { month?: string; year?: string } }) {
+  const requestedYear = Number(searchParams?.year);
+  const year = availableYears.includes(requestedYear) ? requestedYear : DEFAULT_YEAR;
+  const priorYear = year - 1;
+  const hasPriorYear = availableYears.includes(priorYear);
+
+  const [rows, priorRows, notesRows, actionRows] = await Promise.all([
+    getMetricsForYear(INDICATOR, year),
+    hasPriorYear ? getMetricsForYear(INDICATOR, priorYear) : Promise.resolve([]),
+    getMonthlyNotes(INDICATOR, year),
     getActionPlan(INDICATOR),
   ]);
 
-  const byKey = (key: string) => {
+  const byKey = (dataset: typeof rows, key: string) => {
     const arr = Array(12).fill(null) as (number | null)[];
-    rows.filter((r) => r.metricKey === key).forEach((r) => (arr[r.month - 1] = r.value === null ? null : Number(r.value)));
+    dataset.filter((r) => r.metricKey === key).forEach((r) => (arr[r.month - 1] = r.value === null ? null : Number(r.value)));
     return arr;
   };
 
-  const processos = byKey("processos");
-  const pesoKg = byKey("peso_kg");
-  const volumeM3 = byKey("volume_m3");
-  const cif = byKey("cif_entrada");
+  const processos = byKey(rows, "processos");
+  const pesoKg = byKey(rows, "peso_kg");
+  const volumeM3 = byKey(rows, "volume_m3");
+  const cif = byKey(rows, "cif_entrada");
 
   const pesoMedio = months.map((_, i) => (processos[i] && pesoKg[i] ? pesoKg[i]! / processos[i]! : null));
   const cifPorM3 = months.map((_, i) => (volumeM3[i] && cif[i] ? cif[i]! / volumeM3[i]! : null));
+
+  const avg = (arr: (number | null)[]) => {
+    const vals = arr.filter((v): v is number => v !== null);
+    return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+  };
+
+  const priorProcessos = byKey(priorRows, "processos");
+  const priorVolumeM3 = byKey(priorRows, "volume_m3");
+  const priorCif = byKey(priorRows, "cif_entrada");
+  const priorCifPorM3 = months.map((_, i) => (priorVolumeM3[i] && priorCif[i] ? priorCif[i]! / priorVolumeM3[i]! : null));
+  const priorProcessosAvg = hasPriorYear ? avg(priorProcessos) : null;
+  const priorCifPorM3Avg = hasPriorYear ? avg(priorCifPorM3) : null;
 
   const lastIdx = (() => {
     for (let i = 11; i >= 0; i--) if (processos[i] !== null) return i;
     return -1;
   })();
-  const currentMonthLabel = lastIdx >= 0 ? months[lastIdx] : "—";
+
+  const requestedMonth = Number(searchParams?.month);
+  const selectedIdx = requestedMonth >= 1 && requestedMonth <= 12 ? requestedMonth - 1 : lastIdx >= 0 ? lastIdx : 0;
+  const selectedMonthLabel = months[selectedIdx];
 
   const chartDataVolume = months.map((m, i) => ({
     month: m,
@@ -64,6 +85,11 @@ export default async function VolumetriaPage() {
     "CIF por M³ (R$)": cifPorM3[i] ?? 0,
   }));
 
+  const volumeReferenceLines: ReferenceLineConfig[] =
+    priorProcessosAvg !== null ? [{ label: `Méd. ${priorYear}`, value: priorProcessosAvg, color: "#94A3B8" }] : [];
+  const cifReferenceLines: ReferenceLineConfig[] =
+    priorCifPorM3Avg !== null ? [{ label: `Méd. ${priorYear}`, value: priorCifPorM3Avg, color: "#94A3B8" }] : [];
+
   const notesByMonth: Record<number, string> = {};
   notesRows.forEach((n) => (notesByMonth[n.month] = n.note ?? ""));
 
@@ -71,7 +97,7 @@ export default async function VolumetriaPage() {
   index.set("processos", processos);
   index.set("peso_kg", pesoKg);
   index.set("volume_m3", volumeM3);
-  index.set("m3_digital", byKey("m3_digital"));
+  index.set("m3_digital", byKey(rows, "m3_digital"));
   index.set("cif_entrada", cif);
 
   return (
@@ -79,25 +105,29 @@ export default async function VolumetriaPage() {
       <PageHeader
         title="Análise de Volumetria"
         objective="Mensurar processos, peso, volume e CIF de entrada do armazém, com produtividade por m³."
-        year={YEAR}
+        year={year}
       />
 
       <main className="px-6 lg:px-10 py-8 space-y-6 max-w-6xl">
+        <div className="flex justify-end">
+          <MonthPicker selected={selectedIdx + 1} />
+        </div>
+
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <KpiCard label={`Processos — ${currentMonthLabel}`} value={lastIdx >= 0 ? fmtNumber(processos[lastIdx]!) : "—"} />
-          <KpiCard label={`Peso Médio/Processo — ${currentMonthLabel}`} value={lastIdx >= 0 && pesoMedio[lastIdx] !== null ? `${fmtNumber(pesoMedio[lastIdx]!)} kg` : "—"} />
-          <KpiCard label={`CIF Total — ${currentMonthLabel}`} value={lastIdx >= 0 && cif[lastIdx] !== null ? fmtCurrency(cif[lastIdx]!) : "—"} />
-          <KpiCard label={`CIF por M³ — ${currentMonthLabel}`} value={lastIdx >= 0 && cifPorM3[lastIdx] !== null ? fmtCurrency(cifPorM3[lastIdx]!) : "—"} />
+          <KpiCard label={`Processos — ${selectedMonthLabel}`} value={processos[selectedIdx] !== null ? fmtNumber(processos[selectedIdx]!) : "—"} hint={priorProcessosAvg !== null ? `Méd. ${priorYear}: ${fmtNumber(priorProcessosAvg)}` : undefined} />
+          <KpiCard label={`Peso Médio/Processo — ${selectedMonthLabel}`} value={pesoMedio[selectedIdx] !== null ? `${fmtNumber(pesoMedio[selectedIdx]!)} kg` : "—"} />
+          <KpiCard label={`CIF Total — ${selectedMonthLabel}`} value={cif[selectedIdx] !== null ? fmtCurrency(cif[selectedIdx]!) : "—"} />
+          <KpiCard label={`CIF por M³ — ${selectedMonthLabel}`} value={cifPorM3[selectedIdx] !== null ? fmtCurrency(cifPorM3[selectedIdx]!) : "—"} hint={priorCifPorM3Avg !== null ? `Méd. ${priorYear}: ${fmtCurrency(priorCifPorM3Avg)}` : undefined} />
         </section>
 
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-xl shadow-card border border-navy-50 p-5">
             <h2 className="font-display font-semibold text-navy-700 text-sm mb-4">Processos por mês</h2>
-            <MonthlyBarChart data={chartDataVolume} series={[{ key: "Total de Processos", label: "Total de Processos", color: "#324A94" }]} height={260} />
+            <MonthlyBarChart data={chartDataVolume} series={[{ key: "Total de Processos", label: "Total de Processos", color: "#324A94" }]} height={260} referenceLines={volumeReferenceLines} />
           </div>
           <div className="bg-white rounded-xl shadow-card border border-navy-50 p-5">
             <h2 className="font-display font-semibold text-navy-700 text-sm mb-4">CIF por M³ (produtividade)</h2>
-            <MonthlyBarChart data={chartDataCif} series={[{ key: "CIF por M³ (R$)", label: "CIF por M³ (R$)", color: "#D26E38" }]} height={260} />
+            <MonthlyBarChart data={chartDataCif} series={[{ key: "CIF por M³ (R$)", label: "CIF por M³ (R$)", color: "#D26E38" }]} height={260} referenceLines={cifReferenceLines} />
           </div>
         </section>
 
@@ -124,7 +154,7 @@ export default async function VolumetriaPage() {
                     label={f.label}
                     indicator={INDICATOR}
                     metricKey={f.key}
-                    year={YEAR}
+                    year={year}
                     initialValues={index.get(f.key) ?? Array(12).fill(null)}
                     path={PATH}
                   />
@@ -140,10 +170,10 @@ export default async function VolumetriaPage() {
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <NotesEditor
             indicator={INDICATOR}
-            year={YEAR}
+            year={year}
             initialNotes={notesByMonth}
             path={PATH}
-            defaultMonth={lastIdx >= 0 ? lastIdx + 1 : 1}
+            defaultMonth={selectedIdx + 1}
           />
           <ActionPlanTable indicator={INDICATOR} initialRows={actionRows} path={PATH} />
         </section>

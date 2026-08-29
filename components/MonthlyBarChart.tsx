@@ -9,6 +9,7 @@ import {
   Tooltip,
   CartesianGrid,
   Legend,
+  ReferenceLine,
 } from "recharts";
 
 export interface Series {
@@ -17,13 +18,20 @@ export interface Series {
   color: string;
 }
 
+export interface ReferenceLineConfig {
+  label: string;
+  value: number;
+  color: string;
+}
+
 interface MonthlyBarChartProps {
   data: Array<Record<string, number | string>>;
   series: Series[];
   height?: number;
+  referenceLines?: ReferenceLineConfig[];
 }
 
-export default function MonthlyBarChart({ data, series, height = 300 }: MonthlyBarChartProps) {
+export default function MonthlyBarChart({ data, series, height = 300, referenceLines }: MonthlyBarChartProps) {
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
@@ -46,6 +54,16 @@ export default function MonthlyBarChart({ data, series, height = 300 }: MonthlyB
         <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
         {series.map((s) => (
           <Bar key={s.key} dataKey={s.key} name={s.label} fill={s.color} radius={[4, 4, 0, 0]} maxBarSize={28} />
+        ))}
+        {referenceLines?.map((r) => (
+          <ReferenceLine
+            key={r.label}
+            y={r.value}
+            stroke={r.color}
+            strokeDasharray="5 4"
+            strokeWidth={1.5}
+            label={{ value: r.label, position: "insideTopRight", fontSize: 11, fill: r.color }}
+          />
         ))}
       </BarChart>
     </ResponsiveContainer>

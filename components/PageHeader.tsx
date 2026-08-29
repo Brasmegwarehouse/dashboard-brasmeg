@@ -1,10 +1,11 @@
+import ExportButton from "@/components/ExportButton";
+import YearPicker from "@/components/YearPicker";
+
 interface PageHeaderProps {
   title: string;
   objective?: string;
   year: number;
 }
-
-import ExportButton from "@/components/ExportButton";
 
 export default function PageHeader({ title, objective, year }: PageHeaderProps) {
   return (
@@ -19,10 +20,7 @@ export default function PageHeader({ title, objective, year }: PageHeaderProps) 
         )}
       </div>
       <div className="flex items-center gap-2 print:hidden">
-        <div className="flex items-center gap-2 bg-white border border-navy-50 rounded-lg px-3 py-1.5 shadow-card">
-          <span className="text-xs text-slate-400">Ano</span>
-          <span className="font-display font-semibold text-navy-700">{year}</span>
-        </div>
+        <YearPicker selected={year} />
         <ExportButton />
       </div>
     </header>

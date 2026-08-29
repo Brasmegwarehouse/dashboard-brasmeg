@@ -47,3 +47,10 @@ export const months = [
   "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
   "Jul", "Ago", "Set", "Out", "Nov", "Dez",
 ];
+
+// Single source of truth for which years the app knows about, and
+// which one loads by default. When a new year starts, this is the
+// only place that needs a code change — bump DEFAULT_YEAR and add
+// the new year to the array; every page picks it up automatically.
+export const availableYears = [2025, 2026, 2027];
+export const DEFAULT_YEAR = 2026;

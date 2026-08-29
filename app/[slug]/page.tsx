@@ -4,8 +4,14 @@ import IndicatorReportPage from "@/components/IndicatorReportPage";
 
 export const dynamic = "force-dynamic";
 
-export default function Page({ params }: { params: { slug: string } }) {
+export default function Page({
+  params,
+  searchParams,
+}: {
+  params: { slug: string };
+  searchParams: { month?: string; year?: string };
+}) {
   const config = reportConfigs[params.slug];
   if (!config) notFound();
-  return <IndicatorReportPage config={config} />;
+  return <IndicatorReportPage config={config} searchParams={searchParams} />;
 }

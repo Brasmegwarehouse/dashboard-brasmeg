@@ -1,13 +1,11 @@
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import KpiCard from "@/components/KpiCard";
-import { indicators, groupOrder, months } from "@/lib/indicators";
+import { indicators, groupOrder, months, availableYears, DEFAULT_YEAR } from "@/lib/indicators";
 import { getMetricsForYear } from "@/lib/actions";
 import clsx from "clsx";
 
 export const dynamic = "force-dynamic";
-
-const YEAR = 2026;
 
 function lastValue(rows: Awaited<ReturnType<typeof getMetricsForYear>>, metricKey: string) {
   const filled = rows
@@ -17,7 +15,9 @@ function lastValue(rows: Awaited<ReturnType<typeof getMetricsForYear>>, metricKe
   return { value: Number(filled[0].value), month: filled[0].month };
 }
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: { searchParams: { year?: string } }) {
+  const requestedYear = Number(searchParams?.year);
+  const YEAR = availableYears.includes(requestedYear) ? requestedYear : DEFAULT_YEAR;
   const readyCount = indicators.filter((i) => i.ready).length;
 
   const [recExp, ocupPP, ocupBL, acuracidade, faturamento] = await Promise.all([
@@ -72,7 +72,7 @@ export default async function HomePage() {
         </div>
 
         <div>
-          <h2 className="font-display font-semibold text-navy-700 mb-3">Resumo do mês mais recente</h2>
+          <h2 className="font-display font-semibold text-navy-700 mb-3">Resumo do mês mais recente — {YEAR}</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <KpiCard
               label="Recebimento"

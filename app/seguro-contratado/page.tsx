@@ -3,14 +3,14 @@ import KpiCard from "@/components/KpiCard";
 import MonthlyBarChart from "@/components/MonthlyBarChart";
 import PeriodInputRow, { Period } from "@/components/PeriodInputRow";
 import SingleValueInput from "@/components/SingleValueInput";
-import NotesEditor from "@/components/NotesEditor";
 import WeeklyNotesEditor from "@/components/WeeklyNotesEditor";
 import ActionPlanTable from "@/components/ActionPlanTable";
+import WeekPicker from "@/components/WeekPicker";
+import { availableYears, DEFAULT_YEAR } from "@/lib/indicators";
 import { getMetricsForYear, getMonthlyNotes, getActionPlan } from "@/lib/actions";
 
 export const dynamic = "force-dynamic";
 
-const YEAR = 2026;
 const INDICATOR = "seguro_contratado";
 const PATH = "/seguro-contratado";
 const WEEK_COUNT = 52;
@@ -24,7 +24,9 @@ function fmtCurrency(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 }
 
-export default async function SeguroContratadoPage() {
+export default async function SeguroContratadoPage({ searchParams }: { searchParams: { week?: string; year?: string } }) {
+  const requestedYear = Number(searchParams?.year);
+  const YEAR = availableYears.includes(requestedYear) ? requestedYear : DEFAULT_YEAR;
   const weekPeriods: Period[] = Array.from({ length: WEEK_COUNT }, (_, i) => ({
     label: `S${pad(i + 1)}`,
     metricKey: `week_${pad(i + 1)}`,
@@ -54,9 +56,14 @@ export default async function SeguroContratadoPage() {
     return -1;
   })();
 
+  // Which week the KPI cards + observações show — switchable via the
+  // picker, defaults to the most recent filled week.
+  const requestedWeek = Number(searchParams?.week);
+  const selectedIdx = requestedWeek >= 1 && requestedWeek <= WEEK_COUNT ? requestedWeek - 1 : lastIdx >= 0 ? lastIdx : 0;
+
   const filled = total.filter((v): v is number => v !== null);
   const peak = filled.length ? Math.max(...filled) : null;
-  const tetoUsoPct = lastIdx >= 0 && teto ? (total[lastIdx]! / teto) * 100 : null;
+  const tetoUsoPct = total[selectedIdx] !== null && teto ? (total[selectedIdx]! / teto) * 100 : null;
 
   const chartData = weekPeriods.map((p, i) => ({ month: p.label, Total: total[i] ?? 0 }));
 
@@ -72,10 +79,14 @@ export default async function SeguroContratadoPage() {
       />
 
       <main className="px-6 lg:px-10 py-8 space-y-6 max-w-6xl">
+        <div className="flex justify-end">
+          <WeekPicker selected={selectedIdx + 1} weekCount={WEEK_COUNT} />
+        </div>
+
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <KpiCard
-            label={`CIF Total — ${lastIdx >= 0 ? weekPeriods[lastIdx].label : "—"}`}
-            value={lastIdx >= 0 ? fmtCurrency(total[lastIdx]!) : "—"}
+            label={`CIF Total — ${weekPeriods[selectedIdx].label}`}
+            value={total[selectedIdx] !== null ? fmtCurrency(total[selectedIdx]!) : "—"}
           />
           <KpiCard label="Teto do Seguro" value={teto !== null ? fmtCurrency(teto) : "—"} />
           <KpiCard label="% do teto ocupado" value={tetoUsoPct !== null ? `${tetoUsoPct.toFixed(1)}%` : "—"} />
@@ -146,7 +157,7 @@ export default async function SeguroContratadoPage() {
             initialNotes={notesByWeek}
             path={PATH}
             weekCount={WEEK_COUNT}
-            defaultWeek={lastIdx >= 0 ? lastIdx + 1 : 1}
+            defaultWeek={selectedIdx + 1}
           />
           <ActionPlanTable indicator={INDICATOR} initialRows={actionRows} path={PATH} />
         </section>

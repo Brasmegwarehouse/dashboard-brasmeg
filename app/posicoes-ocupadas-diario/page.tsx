@@ -6,11 +6,11 @@ import SingleValueInput from "@/components/SingleValueInput";
 import NotesEditor from "@/components/NotesEditor";
 import ActionPlanTable from "@/components/ActionPlanTable";
 import MonthPicker from "@/components/MonthPicker";
+import { availableYears, DEFAULT_YEAR } from "@/lib/indicators";
 import { getMetricsForYear, getMonthlyNotes, getActionPlan } from "@/lib/actions";
 
 export const dynamic = "force-dynamic";
 
-const YEAR = 2026;
 const INDICATOR = "posicoes_ocupadas_diario";
 const PATH = "/posicoes-ocupadas-diario";
 
@@ -25,8 +25,10 @@ function pad(n: number) {
 export default async function PosicoesOcupadasDiarioPage({
   searchParams,
 }: {
-  searchParams: { month?: string };
+  searchParams: { month?: string; year?: string };
 }) {
+  const requestedYear = Number(searchParams?.year);
+  const YEAR = availableYears.includes(requestedYear) ? requestedYear : DEFAULT_YEAR;
   const month = Math.min(12, Math.max(1, Number(searchParams.month) || 8));
   const dayCount = daysInMonth(YEAR, month);
   const periods: Period[] = Array.from({ length: dayCount }, (_, i) => ({
@@ -73,7 +75,7 @@ export default async function PosicoesOcupadasDiarioPage({
 
       <main className="px-6 lg:px-10 py-8 space-y-6 max-w-6xl">
         <div className="flex justify-end">
-          <MonthPicker basePath={PATH} selected={month} />
+          <MonthPicker selected={month} />
         </div>
 
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">

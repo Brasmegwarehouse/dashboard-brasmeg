@@ -1,11 +1,9 @@
 import PageHeader from "@/components/PageHeader";
 import MonthlyInputRow from "@/components/MonthlyInputRow";
-import { months } from "@/lib/indicators";
+import { months, availableYears, DEFAULT_YEAR } from "@/lib/indicators";
 import { getMetricsForYear } from "@/lib/actions";
 
 export const dynamic = "force-dynamic";
-
-const YEAR = 2026;
 
 // Every field William used to fill in the "Base Dados" tab, grouped
 // exactly like the original sections. Add a new section here and it
@@ -143,7 +141,10 @@ const sections: {
   },
 ];
 
-export default async function BaseDadosPage() {
+export default async function BaseDadosPage({ searchParams }: { searchParams: { year?: string } }) {
+  const requestedYear = Number(searchParams?.year);
+  const YEAR = availableYears.includes(requestedYear) ? requestedYear : DEFAULT_YEAR;
+
   // Pull every metric already saved this year, one query, then index
   // it in memory so each row just looks up its own 12 values.
   const allIndicators = Array.from(new Set(sections.map((s) => s.indicator)));
@@ -170,7 +171,9 @@ export default async function BaseDadosPage() {
       <main className="px-6 lg:px-10 py-8 space-y-8 max-w-6xl">
         <p className="text-sm text-slate-500 -mt-2">
           Digite os números do mês e saia do campo (Tab ou clique fora) para salvar. Cada linha
-          alimenta o gráfico e os cartões da respectiva página de indicador.
+          alimenta o gráfico e os cartões da respectiva página de indicador. Use o seletor de{" "}
+          <b>Ano</b> no topo para preencher dados de 2025 (histórico) — os relatórios comparam
+          automaticamente com a média do ano anterior.
         </p>
 
         {sections.map((section) => (

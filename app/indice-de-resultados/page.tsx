@@ -1,12 +1,11 @@
 import PageHeader from "@/components/PageHeader";
 import MonthlyBarChart from "@/components/MonthlyBarChart";
 import NotesEditor from "@/components/NotesEditor";
-import { months } from "@/lib/indicators";
+import { months, availableYears, DEFAULT_YEAR } from "@/lib/indicators";
 import { getMetricsForYear, getMonthlyNotes } from "@/lib/actions";
 
 export const dynamic = "force-dynamic";
 
-const YEAR = 2026;
 // Reuses the "digital_da_unidade" numbers already filled on Base de
 // Dados — Receita/Custo/CIF por Mão de Obra are just ratios of those,
 // so nothing new needs to be typed for this page to work.
@@ -18,10 +17,13 @@ function fmt(v: number) {
   return v.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
 }
 
-export default async function IndiceDeResultadosPage() {
+export default async function IndiceDeResultadosPage({ searchParams }: { searchParams: { year?: string } }) {
+  const requestedYear = Number(searchParams?.year);
+  const year = availableYears.includes(requestedYear) ? requestedYear : DEFAULT_YEAR;
+
   const [rows, notesRows] = await Promise.all([
-    getMetricsForYear(SOURCE_INDICATOR, YEAR),
-    getMonthlyNotes(NOTES_INDICATOR, YEAR),
+    getMetricsForYear(SOURCE_INDICATOR, year),
+    getMonthlyNotes(NOTES_INDICATOR, year),
   ]);
 
   const byKey = (key: string) => {
@@ -61,7 +63,7 @@ export default async function IndiceDeResultadosPage() {
       <PageHeader
         title="Índice de Resultados"
         objective="Mensurar os resultados de receita e custo do armazém sobre a mão de obra."
-        year={YEAR}
+        year={year}
       />
 
       <main className="px-6 lg:px-10 py-8 space-y-6 max-w-6xl">
@@ -102,7 +104,7 @@ export default async function IndiceDeResultadosPage() {
 
         <NotesEditor
           indicator={NOTES_INDICATOR}
-          year={YEAR}
+          year={year}
           initialNotes={notesByMonth}
           path={PATH}
           defaultMonth={lastIdx >= 0 ? lastIdx + 1 : 1}
