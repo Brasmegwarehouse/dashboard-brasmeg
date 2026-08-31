@@ -46,6 +46,10 @@ O painel pode ficar protegido por uma senha única, compartilhada com quem preci
 
 Todo indicador tem um botão **Exportar** no canto superior direito. Ele abre a janela de impressão do navegador — dá pra imprimir de verdade ou escolher "Salvar como PDF" no destino. O menu lateral e os botões de edição somem automaticamente nessa versão, ficando só o conteúdo pra apresentação.
 
+## Menu no celular
+
+Em telas pequenas o menu lateral vira um botão de menu (☰) fixo no topo — abre um painel deslizante com a mesma lista de abas do desktop. Testado até a largura de um iPhone SE; em tablets já mostra o menu lateral fixo normal (breakpoint em 1024px).
+
 ## Banco de dados (Neon — grátis)
 
 1. Crie uma conta em https://neon.tech e um projeto novo.
@@ -81,8 +85,6 @@ Quando 2027 começar, é só abrir `lib/indicators.ts` e adicionar `2027` na lis
 ## Próximos passos sugeridos
 
 - [ ] Validar as páginas com você, principalmente as 3 novas (Posições Diário, Seguro Contratado, Volumetria) — a estrutura de dados delas foi minha melhor leitura da planilha original, pode ter algum ajuste de campo
-- [ ] Menu de navegação para celular (hoje só funciona em tela de desktop/tablet)
-- [ ] Editar o status de uma ação já criada no Plano de Ação (hoje só entra como "Não Iniciado")
 - [ ] Botão de exportar os números brutos em CSV
 - [ ] Se quiser controlar quem edita (login por pessoa, não senha única), dá pra evoluir para NextAuth ou Clerk
 

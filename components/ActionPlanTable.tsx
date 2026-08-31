@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { addActionPlanRow } from "@/lib/actions";
+import { addActionPlanRow, updateActionPlanStatus, deleteActionPlanRow } from "@/lib/actions";
 import clsx from "clsx";
 
 interface Row {
@@ -12,6 +12,8 @@ interface Row {
   status: string | null;
   effective: string | null;
 }
+
+const STATUS_OPTIONS = ["Não Iniciado", "Em Andamento", "Concluído", "Atrasado"];
 
 const statusStyles: Record<string, string> = {
   "Não Iniciado": "bg-slate-100 text-slate-600",
@@ -26,18 +28,32 @@ export default function ActionPlanTable({ indicator, initialRows, path }: { indi
   const [owner, setOwner] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [savedId, setSavedId] = useState<number | null>(null);
 
   function handleAdd() {
     if (!action.trim()) return;
     startTransition(async () => {
-      await addActionPlanRow(indicator, action, owner, dueDate, path);
-      setRows((prev) => [
-        ...prev,
-        { id: Date.now(), action, owner, dueDate, status: "Não Iniciado", effective: null },
-      ]);
+      const newRow = await addActionPlanRow(indicator, action, owner, dueDate, path);
+      if (newRow) setRows((prev) => [...prev, newRow as Row]);
       setAction("");
       setOwner("");
       setDueDate("");
+    });
+  }
+
+  function handleStatusChange(id: number, status: string) {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+    startTransition(async () => {
+      await updateActionPlanStatus(id, status, path);
+      setSavedId(id);
+      setTimeout(() => setSavedId((cur) => (cur === id ? null : cur)), 900);
+    });
+  }
+
+  function handleDelete(id: number) {
+    setRows((prev) => prev.filter((r) => r.id !== id));
+    startTransition(async () => {
+      await deleteActionPlanRow(id, path);
     });
   }
 
@@ -52,7 +68,8 @@ export default function ActionPlanTable({ indicator, initialRows, path }: { indi
               <th className="pb-2 pr-4">Ação</th>
               <th className="pb-2 pr-4">Responsável</th>
               <th className="pb-2 pr-4">Prazo</th>
-              <th className="pb-2">Status</th>
+              <th className="pb-2 pr-4">Status</th>
+              <th className="pb-2 w-8" />
             </tr>
           </thead>
           <tbody>
@@ -61,16 +78,46 @@ export default function ActionPlanTable({ indicator, initialRows, path }: { indi
                 <td className="py-2 pr-4 text-slate-700">{r.action}</td>
                 <td className="py-2 pr-4 text-slate-500">{r.owner || "—"}</td>
                 <td className="py-2 pr-4 text-slate-500">{r.dueDate || "—"}</td>
+                <td className="py-2 pr-4">
+                  <select
+                    value={r.status ?? "Não Iniciado"}
+                    onChange={(e) => handleStatusChange(r.id, e.target.value)}
+                    className={clsx(
+                      "text-xs font-medium rounded-full pl-2.5 pr-6 py-0.5 border-0 appearance-none cursor-pointer transition-colors",
+                      "bg-[length:14px] bg-[right_4px_center] bg-no-repeat",
+                      statusStyles[r.status ?? ""] ?? "bg-slate-100 text-slate-600",
+                      savedId === r.id && "ring-2 ring-emerald-300"
+                    )}
+                    style={{
+                      backgroundImage:
+                        "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")",
+                    }}
+                  >
+                    {STATUS_OPTIONS.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </td>
                 <td className="py-2">
-                  <span className={clsx("text-xs px-2 py-0.5 rounded-full font-medium", statusStyles[r.status ?? ""] ?? "bg-slate-100 text-slate-600")}>
-                    {r.status}
-                  </span>
+                  <button
+                    onClick={() => handleDelete(r.id)}
+                    aria-label="Excluir ação"
+                    title="Excluir ação"
+                    className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                  </button>
                 </td>
               </tr>
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={4} className="py-4 text-center text-slate-400 text-sm">
+                <td colSpan={5} className="py-4 text-center text-slate-400 text-sm">
                   Nenhuma ação cadastrada ainda.
                 </td>
               </tr>

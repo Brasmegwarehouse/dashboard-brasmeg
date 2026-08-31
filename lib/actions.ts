@@ -88,6 +88,17 @@ export async function addActionPlanRow(
   dueDate: string,
   path: string
 ) {
-  await db.insert(actionPlan).values({ indicator, action, owner, dueDate });
+  const [row] = await db.insert(actionPlan).values({ indicator, action, owner, dueDate }).returning();
+  revalidatePath(path);
+  return row;
+}
+
+export async function updateActionPlanStatus(id: number, status: string, path: string) {
+  await db.update(actionPlan).set({ status }).where(eq(actionPlan.id, id));
+  revalidatePath(path);
+}
+
+export async function deleteActionPlanRow(id: number, path: string) {
+  await db.delete(actionPlan).where(eq(actionPlan.id, id));
   revalidatePath(path);
 }
