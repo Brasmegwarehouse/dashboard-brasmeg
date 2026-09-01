@@ -8,6 +8,7 @@ import {
   timestamp,
   varchar,
   unique,
+  date,
 } from "drizzle-orm/pg-core";
 
 /**
@@ -74,5 +75,54 @@ export const actionPlan = pgTable("action_plan", {
   dueDate: varchar("due_date", { length: 20 }),
   status: varchar("status", { length: 24 }).default("Não Iniciado"),
   effective: varchar("effective", { length: 8 }), // "Sim" | "Não"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+/**
+ * operacoes
+ * ---------------------------------------------------------------
+ * One row per veículo atendido no pátio — substitui a aba "Registro"
+ * da planilha de Controle Operacional Carga & Descarga.
+ * Preenchimento em duas etapas, pelos dois times:
+ *   1) Portaria/ADM lança o veículo até a liberação (data..horaLiberacao)
+ *   2) Operação completa horaInicioOperacao + horaSaida ao final,
+ *      junto com os serviços adicionais usados (tabela abaixo).
+ * Status ("Aguardando" / "Em Operação" / "Atrasado" / "Finalizado")
+ * é derivado dos horários em tempo real, não fica salvo aqui.
+ */
+export const operacoes = pgTable("operacoes", {
+  id: serial("id").primaryKey(),
+  data: date("data", { mode: "string" }).notNull(),
+  cliente: varchar("cliente", { length: 120 }).notNull(),
+  nf: varchar("nf", { length: 40 }),
+  qtdeNf: integer("qtde_nf"),
+  placa: varchar("placa", { length: 40 }).notNull(),
+  transportadora: varchar("transportadora", { length: 160 }),
+  tipoOperacao: varchar("tipo_operacao", { length: 40 }).notNull(),
+  horaChegada: varchar("hora_chegada", { length: 5 }), // "HH:MM" — preenchido pela Portaria/ADM
+  horaLiberacao: varchar("hora_liberacao", { length: 5 }), // idem
+  horaInicioOperacao: varchar("hora_inicio_operacao", { length: 5 }), // preenchido pela Operação
+  horaSaida: varchar("hora_saida", { length: 5 }), // idem — presença deste campo = "Finalizado"
+  observacoes: text("observacoes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+/**
+ * operacao_servicos
+ * ---------------------------------------------------------------
+ * Serviços adicionais usados numa operação (Stretch, Pallet,
+ * Etiquetagem, Outro...), só os marcados "Sim" ficam salvos aqui.
+ * É essa tabela que alimenta a aba de Faturamento: cliente + NF +
+ * serviços usados, pronto pra cobrança.
+ */
+export const operacaoServicos = pgTable("operacao_servicos", {
+  id: serial("id").primaryKey(),
+  operacaoId: integer("operacao_id")
+    .notNull()
+    .references(() => operacoes.id, { onDelete: "cascade" }),
+  servico: varchar("servico", { length: 80 }).notNull(),
+  quantidade: numeric("quantidade"),
+  descricao: text("descricao"), // usado pelo serviço "Outro"
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

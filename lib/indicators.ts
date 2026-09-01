@@ -1,4 +1,5 @@
 export type IndicatorGroup =
+  | "Operação"
   | "Movimentação"
   | "Ocupação"
   | "Qualidade & Financeiro"
@@ -12,6 +13,8 @@ export interface IndicatorDef {
 }
 
 export const indicators: IndicatorDef[] = [
+  { slug: "controle-operacional", name: "Controle Operacional (Carga/Descarga)", group: "Operação", ready: true },
+
   { slug: "base-dados", name: "Base de Dados (preenchimento)", group: "Movimentação", ready: true },
   { slug: "recebimento-expedicao", name: "Recebimento & Expedição", group: "Movimentação", ready: true },
   { slug: "picking", name: "Picking", group: "Movimentação", ready: true },
@@ -37,6 +40,7 @@ export const indicators: IndicatorDef[] = [
 ];
 
 export const groupOrder: IndicatorGroup[] = [
+  "Operação",
   "Movimentação",
   "Ocupação",
   "Qualidade & Financeiro",
