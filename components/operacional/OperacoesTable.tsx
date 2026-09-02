@@ -50,6 +50,26 @@ function TempoAguardando({ op, now }: { op: OperacaoRow; now: Date }) {
   return <span className={`text-sm font-medium tabular-nums ${cor}`}>{formatMinutos(mins)}</span>;
 }
 
+function NfCell({ nf }: { nf: string | null }) {
+  if (!nf) return <span className="text-slate-300">—</span>;
+  // Várias notas separadas por vírgula/espaço — quebra em várias linhas
+  // dentro da própria coluna, em vez de esticar a coluna pros lados.
+  const notas = nf
+    .split(/[,;/]+/)
+    .map((n) => n.trim())
+    .filter(Boolean);
+  if (notas.length <= 1) return <span className="tabular-nums break-words">{nf}</span>;
+  return (
+    <div className="flex flex-col gap-0.5">
+      {notas.map((n, i) => (
+        <span key={i} className="tabular-nums leading-tight">
+          {n}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default function OperacoesTable({
   operacoes,
   onSelect,
@@ -77,14 +97,26 @@ export default function OperacoesTable({
 
   return (
     <div className="bg-white rounded-xl shadow-card border border-navy-50 overflow-x-auto scrollbar-thin">
-      <table className="min-w-full border-separate border-spacing-0">
+      <table className="w-full table-fixed border-separate border-spacing-0">
+        <colgroup>
+          <col className="w-[13%]" /> {/* Cliente */}
+          <col className="w-[9%]" /> {/* Tipo */}
+          <col className="w-[9%]" /> {/* NF */}
+          <col className="w-[9%]" /> {/* Placa */}
+          <col className="w-[13%]" /> {/* Transportadora */}
+          <col className="w-[7%]" /> {/* Chegada */}
+          <col className="w-[7%]" /> {/* Liberação */}
+          <col className="w-[9%]" /> {/* Aguardando */}
+          <col className="w-[10%]" /> {/* Status */}
+          <col className="w-[14%]" /> {/* Serviços */}
+        </colgroup>
         <thead>
           <tr>
             {["Cliente", "Tipo", "NF", "Placa", "Transportadora", "Chegada", "Liberação", "Aguardando", "Status", "Serviços"].map(
               (h) => (
                 <th
                   key={h}
-                  className="text-left text-[11px] font-medium uppercase tracking-wide text-slate-400 px-4 py-2.5 border-b border-navy-50"
+                  className="text-left text-[11px] font-medium uppercase tracking-wide text-slate-400 px-3 py-2.5 border-b border-navy-50 truncate"
                 >
                   {h}
                 </th>
@@ -101,28 +133,30 @@ export default function OperacoesTable({
                 key={op.id}
                 onClick={readOnly ? undefined : () => onSelect?.(op.id)}
                 className={
-                  readOnly ? "" : "cursor-pointer hover:bg-mist/60 transition-colors"
+                  readOnly ? "" : "cursor-pointer hover:bg-mist/60 transition-colors align-top"
                 }
               >
-                <td className="px-4 py-3 text-sm border-b border-navy-50">{op.cliente}</td>
-                <td className="px-4 py-3 border-b border-navy-50">
+                <td className="px-3 py-3 text-sm border-b border-navy-50 break-words">{op.cliente}</td>
+                <td className="px-3 py-3 border-b border-navy-50">
                   <TipoBadge tipo={op.tipoOperacao} />
                 </td>
-                <td className="px-4 py-3 text-sm border-b border-navy-50 tabular-nums">{op.nf ?? "—"}</td>
-                <td className="px-4 py-3 text-sm border-b border-navy-50 font-medium">{op.placa}</td>
-                <td className="px-4 py-3 text-sm border-b border-navy-50 text-slate-500">
+                <td className="px-3 py-3 text-sm border-b border-navy-50">
+                  <NfCell nf={op.nf} />
+                </td>
+                <td className="px-3 py-3 text-sm border-b border-navy-50 font-medium break-words">{op.placa}</td>
+                <td className="px-3 py-3 text-sm border-b border-navy-50 text-slate-500 break-words">
                   {op.transportadora ?? "—"}
                 </td>
-                <td className="px-4 py-3 text-sm border-b border-navy-50 tabular-nums">
+                <td className="px-3 py-3 text-sm border-b border-navy-50 tabular-nums">
                   {op.horaChegada ?? "—"}
                 </td>
-                <td className="px-4 py-3 text-sm border-b border-navy-50 tabular-nums">
+                <td className="px-3 py-3 text-sm border-b border-navy-50 tabular-nums">
                   {op.horaLiberacao ?? "—"}
                 </td>
-                <td className="px-4 py-3 border-b border-navy-50">
+                <td className="px-3 py-3 border-b border-navy-50">
                   <TempoAguardando op={op} now={now} />
                 </td>
-                <td className="px-4 py-3 border-b border-navy-50">
+                <td className="px-3 py-3 border-b border-navy-50">
                   <span
                     className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${meta.classes}`}
                   >
@@ -130,7 +164,7 @@ export default function OperacoesTable({
                     {meta.label}
                   </span>
                 </td>
-                <td className="px-4 py-3 border-b border-navy-50">
+                <td className="px-3 py-3 border-b border-navy-50">
                   <ServicosResumo servicos={op.servicos} />
                 </td>
               </tr>
