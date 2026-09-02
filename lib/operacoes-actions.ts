@@ -2,24 +2,51 @@
 
 import { db } from "./db";
 import { operacoes, operacaoServicos } from "./db/schema";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, gte, inArray, lte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-export interface NovaOperacaoInput {
-  data: string; // "YYYY-MM-DD"
+/** Campos que a Portaria/ADM preenche — todos obrigatórios (bloqueado no formulário e reforçado aqui). */
+export interface EditOperacaoInput {
   cliente: string;
-  nf: string | null;
-  qtdeNf: number | null;
+  nf: string;
+  qtdeNf: number;
   placa: string;
-  transportadora: string | null;
+  transportadora: string;
   tipoOperacao: string;
   horaChegada: string; // "HH:MM"
-  horaLiberacao: string | null;
+  horaLiberacao: string; // "HH:MM"
+}
+
+export interface NovaOperacaoInput extends EditOperacaoInput {
+  data: string; // "YYYY-MM-DD"
+}
+
+function validarCampos(input: EditOperacaoInput) {
+  if (
+    !input.cliente?.trim() ||
+    !input.nf?.trim() ||
+    !input.qtdeNf ||
+    !input.placa?.trim() ||
+    !input.transportadora?.trim() ||
+    !input.tipoOperacao?.trim() ||
+    !input.horaChegada ||
+    !input.horaLiberacao
+  ) {
+    throw new Error("Preencha todos os campos antes de salvar.");
+  }
 }
 
 /** Lançamento inicial do veículo — feito pela Portaria/ADM. */
 export async function createOperacao(input: NovaOperacaoInput, path: string) {
+  validarCampos(input);
   await db.insert(operacoes).values(input);
+  revalidatePath(path);
+}
+
+/** Corrige um lançamento já feito (placa, NF, horários...) — não mexe em horário de operação nem serviços. */
+export async function updateOperacaoLancamento(id: number, input: EditOperacaoInput, path: string) {
+  validarCampos(input);
+  await db.update(operacoes).set({ ...input, updatedAt: new Date() }).where(eq(operacoes.id, id));
   revalidatePath(path);
 }
 
@@ -100,4 +127,52 @@ export async function getOperacoesByData(data: string): Promise<OperacaoRow[]> {
         .map((s) => ({ id: s.id, servico: s.servico, quantidade: s.quantidade, descricao: s.descricao })),
     }))
     .sort((a, b) => (a.horaChegada ?? "99:99").localeCompare(b.horaChegada ?? "99:99"));
+}
+
+function categoriaTipo(tipo: string): "Carga" | "Descarga" | "Entrega" {
+  if (tipo.startsWith("Carga")) return "Carga";
+  if (tipo.startsWith("Descarga")) return "Descarga";
+  return "Entrega";
+}
+
+export interface ResumoOperacional {
+  porDia: { dia: string; Carga: number; Descarga: number; Entrega: number }[];
+  porTipo: { tipo: string; total: number }[];
+  porCliente: { cliente: string; total: number }[];
+  totalOperacoes: number;
+}
+
+/** Resumo agregado de um mês inteiro, pra alimentar os gráficos de Relatórios. */
+export async function getResumoMensal(anoMes: string /* "YYYY-MM" */): Promise<ResumoOperacional> {
+  const inicio = `${anoMes}-01`;
+  const fim = `${anoMes}-31`;
+  const rows = await db.select().from(operacoes).where(and(gte(operacoes.data, inicio), lte(operacoes.data, fim)));
+
+  const porDiaMap = new Map<string, { Carga: number; Descarga: number; Entrega: number }>();
+  const porTipoMap = new Map<string, number>();
+  const porClienteMap = new Map<string, number>();
+
+  for (const r of rows) {
+    const dia = r.data.slice(8, 10);
+    const cat = categoriaTipo(r.tipoOperacao);
+
+    if (!porDiaMap.has(dia)) porDiaMap.set(dia, { Carga: 0, Descarga: 0, Entrega: 0 });
+    porDiaMap.get(dia)![cat] += 1;
+
+    porTipoMap.set(cat, (porTipoMap.get(cat) ?? 0) + 1);
+    porClienteMap.set(r.cliente, (porClienteMap.get(r.cliente) ?? 0) + 1);
+  }
+
+  const porDia = Array.from(porDiaMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([dia, v]) => ({ dia, ...v }));
+
+  const porTipo = Array.from(porTipoMap.entries()).map(([tipo, total]) => ({ tipo, total }));
+
+  const porCliente = Array.from(porClienteMap.entries())
+    .map(([cliente, total]) => ({ cliente, total }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 8);
+
+  return { porDia, porTipo, porCliente, totalOperacoes: rows.length };
 }

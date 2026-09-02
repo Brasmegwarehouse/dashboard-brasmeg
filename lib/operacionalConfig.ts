@@ -23,6 +23,7 @@ export const TIPOS_OPERACAO = [
   "Descarga",
   "Carga Crossdocking",
   "Descarga Crossdocking",
+  "Entrega",
 ] as const;
 
 // Serviços com pergunta Sim/Não fixa. "Outro" é tratado à parte no

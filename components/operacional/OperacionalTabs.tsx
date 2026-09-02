@@ -8,6 +8,7 @@ const TABS = [
   { href: "/controle-operacional/painel", label: "Painel" },
   { href: "/controle-operacional/lancamento", label: "Lançar veículo" },
   { href: "/controle-operacional/faturamento", label: "Faturamento" },
+  { href: "/controle-operacional/relatorios", label: "Relatórios" },
 ];
 
 export default function OperacionalTabs() {

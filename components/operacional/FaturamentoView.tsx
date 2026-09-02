@@ -2,17 +2,38 @@
 
 import type { OperacaoRow } from "@/lib/operacoes-actions";
 import ExportButton from "@/components/ExportButton";
+import ExcelExportButton from "./ExcelExportButton";
 
 export default function FaturamentoView({ operacoes }: { operacoes: OperacaoRow[] }) {
   const comServico = operacoes.filter((op) => op.servicos.length > 0);
 
+  const linhasExcel = comServico.flatMap((op) =>
+    op.servicos.map((s) => ({
+      Data: op.data,
+      Cliente: op.cliente,
+      NF: op.nf ?? "",
+      Placa: op.placa,
+      Tipo: op.tipoOperacao,
+      Serviço: s.servico,
+      Quantidade: s.quantidade ?? "",
+      Observação: s.descricao ?? "",
+    }))
+  );
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-slate-500">
           Notas com serviço adicional lançado nesta data — cliente, NF e o que foi usado, pronto pra cobrança.
         </p>
-        <ExportButton />
+        <div className="flex items-center gap-2">
+          <ExcelExportButton
+            rows={linhasExcel}
+            filename={`faturamento-servicos-${new Date().toISOString().slice(0, 10)}.xlsx`}
+            sheetName="Faturamento"
+          />
+          <ExportButton />
+        </div>
       </div>
 
       {comServico.length === 0 ? (

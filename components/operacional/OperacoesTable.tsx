@@ -22,8 +22,11 @@ function ServicosResumo({ servicos }: { servicos: OperacaoRow["servicos"] }) {
 }
 
 function TipoBadge({ tipo }: { tipo: string }) {
-  const isCarga = tipo.startsWith("Carga");
-  const classes = isCarga ? "bg-sky-50 text-sky-700" : "bg-purple-50 text-purple-700";
+  const classes = tipo.startsWith("Carga")
+    ? "bg-sky-50 text-sky-700"
+    : tipo.startsWith("Descarga")
+    ? "bg-purple-50 text-purple-700"
+    : "bg-emerald-50 text-emerald-700"; // Entrega
   return (
     <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${classes}`}>
       {tipo}
