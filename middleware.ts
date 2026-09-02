@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Login "operacional" só pode ver o painel — qualquer outra rota
+// (Visão Geral, outros indicadores, lançamento, faturamento) manda
+// de volta pra cá.
+const OPERACIONAL_HOME = "/controle-operacional/painel";
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -15,17 +20,30 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const expected = process.env.APP_PASSWORD;
-  // If APP_PASSWORD isn't configured at all, don't lock the owner out —
+  const geral = process.env.APP_PASSWORD;
+  const operacional = process.env.APP_PASSWORD_OPERACIONAL;
+  // If neither password is configured, don't lock the owner out —
   // just let requests through (matches the "no login yet" state).
-  if (!expected) return NextResponse.next();
+  if (!geral && !operacional) return NextResponse.next();
 
   const cookie = req.cookies.get("brasmeg_session")?.value;
-  if (cookie === expected) return NextResponse.next();
+  let role: "geral" | "operacional" | null = null;
+  if (cookie) {
+    if (geral && cookie === geral) role = "geral";
+    else if (operacional && cookie === operacional) role = "operacional";
+  }
 
-  const loginUrl = new URL("/login", req.url);
-  loginUrl.searchParams.set("from", pathname);
-  return NextResponse.redirect(loginUrl);
+  if (!role) {
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("from", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (role === "operacional" && !pathname.startsWith(OPERACIONAL_HOME)) {
+    return NextResponse.redirect(new URL(OPERACIONAL_HOME, req.url));
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {

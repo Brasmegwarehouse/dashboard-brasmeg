@@ -16,7 +16,7 @@ function toMinutes(hhmm: string): number {
   return h * 60 + m;
 }
 
-function minutosDesde(hhmm: string, agora: Date): number {
+export function minutesSince(hhmm: string, agora: Date): number {
   const [h, m] = hhmm.split(":").map(Number);
   const inicio = new Date(agora);
   inicio.setHours(h, m, 0, 0);
@@ -27,7 +27,7 @@ export function computeStatus(op: HorariosOperacao, agora: Date = new Date()): S
   if (!op.horaChegada) return "aguardando";
 
   if (!op.horaSaida) {
-    const minutos = minutosDesde(op.horaChegada, agora);
+    const minutos = minutesSince(op.horaChegada, agora);
     return minutos > 60 ? "atencao" : "em_operacao";
   }
 
@@ -40,10 +40,23 @@ export function computeStatus(op: HorariosOperacao, agora: Date = new Date()): S
   return "finalizado";
 }
 
+export function formatMinutos(mins: number): string {
+  const total = Math.max(0, mins);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return h > 0 ? `${h}h ${m}min` : `${m}min`;
+}
+
+export function minutosEntre(inicioHHMM: string, fimHHMM: string): number {
+  const [h1, m1] = inicioHHMM.split(":").map(Number);
+  const [h2, m2] = fimHHMM.split(":").map(Number);
+  return h2 * 60 + m2 - (h1 * 60 + m1);
+}
+
 export const STATUS_META: Record<StatusOperacao, { label: string; classes: string; dot: string }> = {
   aguardando: { label: "Aguardando", classes: "bg-slate-100 text-slate-500", dot: "bg-slate-400" },
   em_operacao: { label: "Em Operação", classes: "bg-amber-50 text-amber-700", dot: "bg-amber-500" },
-  atencao: { label: "Atenção", classes: "bg-orange-50 text-orange-700", dot: "bg-orange-500" },
-  atrasado: { label: "Atrasado", classes: "bg-red-50 text-red-600", dot: "bg-red-500" },
+  atencao: { label: "Atenção", classes: "bg-red-50 text-red-700", dot: "bg-red-500" },
+  atrasado: { label: "Atrasado", classes: "bg-red-100 text-red-800", dot: "bg-red-700" },
   finalizado: { label: "Finalizado", classes: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
 };

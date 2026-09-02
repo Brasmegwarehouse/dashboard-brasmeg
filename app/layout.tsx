@@ -3,6 +3,7 @@ import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import MobileNav from "@/components/MobileNav";
+import { getRole } from "@/lib/auth";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope" });
@@ -13,12 +14,17 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Login "operacional" só acessa o painel — sem menu lateral com os
+  // outros indicadores, fica só a tela limpa em largura total.
+  const role = getRole();
+  const showChrome = role !== "operacional";
+
   return (
     <html lang="pt-BR">
       <body className={`${inter.variable} ${manrope.variable} font-sans antialiased`}>
-        <Sidebar />
-        <div className="lg:pl-72">
-          <MobileNav />
+        {showChrome && <Sidebar />}
+        <div className={showChrome ? "lg:pl-72" : ""}>
+          {showChrome && <MobileNav />}
           {children}
         </div>
       </body>

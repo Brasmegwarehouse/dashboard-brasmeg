@@ -13,7 +13,7 @@ export interface IndicatorDef {
 }
 
 export const indicators: IndicatorDef[] = [
-  { slug: "controle-operacional", name: "Controle Operacional (Carga/Descarga)", group: "Operação", ready: true },
+  { slug: "controle-operacional/painel", name: "Controle Operacional (Carga/Descarga)", group: "Operação", ready: true },
 
   { slug: "base-dados", name: "Base de Dados (preenchimento)", group: "Movimentação", ready: true },
   { slug: "recebimento-expedicao", name: "Recebimento & Expedição", group: "Movimentação", ready: true },

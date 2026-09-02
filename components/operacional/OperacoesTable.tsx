@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { OperacaoRow } from "@/lib/operacoes-actions";
-import { computeStatus, STATUS_META } from "@/lib/operacionalStatus";
+import { computeStatus, STATUS_META, minutesSince, minutosEntre, formatMinutos } from "@/lib/operacionalStatus";
 
 function ServicosResumo({ servicos }: { servicos: OperacaoRow["servicos"] }) {
   if (servicos.length === 0) return <span className="text-slate-300 text-xs">—</span>;
@@ -21,19 +21,49 @@ function ServicosResumo({ servicos }: { servicos: OperacaoRow["servicos"] }) {
   );
 }
 
+function TipoBadge({ tipo }: { tipo: string }) {
+  const isCarga = tipo.startsWith("Carga");
+  const classes = isCarga ? "bg-sky-50 text-sky-700" : "bg-purple-50 text-purple-700";
+  return (
+    <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${classes}`}>
+      {tipo}
+    </span>
+  );
+}
+
+/**
+ * Tempo aguardando desde a liberação (Portaria/ADM). Enquanto a
+ * operação não é finalizada, conta ao vivo — atualiza sozinho, sem
+ * precisar mexer em nada, diferente da planilha antiga que só
+ * recalculava quando alguém editava uma célula.
+ */
+function TempoAguardando({ op, now }: { op: OperacaoRow; now: Date }) {
+  if (!op.horaLiberacao) return <span className="text-slate-300 text-xs">—</span>;
+
+  if (op.horaSaida) {
+    const total = minutosEntre(op.horaLiberacao, op.horaSaida);
+    return <span className="text-xs text-slate-400">{formatMinutos(total)} (total)</span>;
+  }
+
+  const mins = minutesSince(op.horaLiberacao, now);
+  const cor = mins > 60 ? "text-red-600" : mins > 30 ? "text-amber-600" : "text-slate-600";
+  return <span className={`text-sm font-medium tabular-nums ${cor}`}>{formatMinutos(mins)}</span>;
+}
+
 export default function OperacoesTable({
   operacoes,
   onSelect,
+  readOnly = false,
 }: {
   operacoes: OperacaoRow[];
-  onSelect: (id: number) => void;
+  onSelect?: (id: number) => void;
+  readOnly?: boolean;
 }) {
-  // Recalcula o status a cada minuto, pra "Em Operação" virar "Atenção"
-  // sozinho quando o tempo de espera passa de 60 min — igual à
-  // planilha, que recalcula via NOW() a cada abertura.
+  // Recalcula status e contador a cada 20s — atualiza sozinho, sem
+  // precisar de nenhuma ação da tela.
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 60_000);
+    const t = setInterval(() => setNow(new Date()), 20_000);
     return () => clearInterval(t);
   }, []);
 
@@ -50,7 +80,7 @@ export default function OperacoesTable({
       <table className="min-w-full border-separate border-spacing-0">
         <thead>
           <tr>
-            {["Cliente", "NF", "Placa", "Transportadora", "Chegada", "Liberação", "Status", "Serviços"].map(
+            {["Cliente", "Tipo", "NF", "Placa", "Transportadora", "Chegada", "Liberação", "Aguardando", "Status", "Serviços"].map(
               (h) => (
                 <th
                   key={h}
@@ -69,10 +99,15 @@ export default function OperacoesTable({
             return (
               <tr
                 key={op.id}
-                onClick={() => onSelect(op.id)}
-                className="cursor-pointer hover:bg-mist/60 transition-colors"
+                onClick={readOnly ? undefined : () => onSelect?.(op.id)}
+                className={
+                  readOnly ? "" : "cursor-pointer hover:bg-mist/60 transition-colors"
+                }
               >
                 <td className="px-4 py-3 text-sm border-b border-navy-50">{op.cliente}</td>
+                <td className="px-4 py-3 border-b border-navy-50">
+                  <TipoBadge tipo={op.tipoOperacao} />
+                </td>
                 <td className="px-4 py-3 text-sm border-b border-navy-50 tabular-nums">{op.nf ?? "—"}</td>
                 <td className="px-4 py-3 text-sm border-b border-navy-50 font-medium">{op.placa}</td>
                 <td className="px-4 py-3 text-sm border-b border-navy-50 text-slate-500">
@@ -83,6 +118,9 @@ export default function OperacoesTable({
                 </td>
                 <td className="px-4 py-3 text-sm border-b border-navy-50 tabular-nums">
                   {op.horaLiberacao ?? "—"}
+                </td>
+                <td className="px-4 py-3 border-b border-navy-50">
+                  <TempoAguardando op={op} now={now} />
                 </td>
                 <td className="px-4 py-3 border-b border-navy-50">
                   <span
