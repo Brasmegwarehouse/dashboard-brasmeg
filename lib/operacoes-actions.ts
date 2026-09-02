@@ -135,6 +135,13 @@ function categoriaTipo(tipo: string): "Carga" | "Descarga" | "Entrega" {
   return "Entrega";
 }
 
+/** Último dia real do mês (28/29/30/31) — evita gerar uma data inválida tipo "2026-09-31". */
+function ultimoDiaDoMes(anoMes: string): string {
+  const [ano, mes] = anoMes.split("-").map(Number);
+  const ultimoDia = new Date(ano, mes, 0).getDate(); // dia 0 do mês seguinte = último dia deste mês
+  return `${anoMes}-${String(ultimoDia).padStart(2, "0")}`;
+}
+
 export interface ResumoOperacional {
   porDia: { dia: string; Carga: number; Descarga: number; Entrega: number }[];
   porTipo: { tipo: string; total: number }[];
@@ -145,7 +152,7 @@ export interface ResumoOperacional {
 /** Resumo agregado de um mês inteiro, pra alimentar os gráficos de Relatórios. */
 export async function getResumoMensal(anoMes: string /* "YYYY-MM" */): Promise<ResumoOperacional> {
   const inicio = `${anoMes}-01`;
-  const fim = `${anoMes}-31`;
+  const fim = ultimoDiaDoMes(anoMes);
   const rows = await db.select().from(operacoes).where(and(gte(operacoes.data, inicio), lte(operacoes.data, fim)));
 
   const porDiaMap = new Map<string, { Carga: number; Descarga: number; Entrega: number }>();
