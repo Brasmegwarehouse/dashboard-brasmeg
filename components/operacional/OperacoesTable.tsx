@@ -73,6 +73,58 @@ function NfCell({ nf }: { nf: string | null }) {
   );
 }
 
+function MobileOperacaoCard({
+  op,
+  now,
+  onClick,
+  clickable,
+}: {
+  op: OperacaoRow;
+  now: Date;
+  onClick?: () => void;
+  clickable: boolean;
+}) {
+  const status = computeStatus(op, now);
+  const meta = STATUS_META[status];
+  return (
+    <div
+      onClick={clickable ? onClick : undefined}
+      className={`rounded-xl border border-navy-50 bg-white p-4 shadow-card ${clickable ? "active:bg-mist/60" : ""}`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="font-display font-semibold text-navy-700 text-[15px] truncate">{op.cliente}</p>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {op.placa} · NF <NfCell nf={op.nf} />
+          </p>
+        </div>
+        <TipoBadge tipo={op.tipoOperacao} />
+      </div>
+
+      <div className="flex items-center justify-between mt-3">
+        <span
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${meta.classes}`}
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
+          {meta.label}
+        </span>
+        <TempoAguardando op={op} now={now} />
+      </div>
+
+      <div className="flex items-center justify-between mt-2.5 text-xs text-slate-400">
+        <span>Chegada {op.horaChegada ?? "—"}</span>
+        <span>Liberação {op.horaLiberacao ?? "—"}</span>
+      </div>
+
+      {op.servicos.length > 0 && (
+        <div className="mt-2.5 pt-2.5 border-t border-navy-50">
+          <ServicosResumo servicos={op.servicos} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function OperacoesTable({
   operacoes,
   onSelect,
@@ -99,82 +151,98 @@ export default function OperacoesTable({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-card border border-navy-50 overflow-x-auto scrollbar-thin">
-      <table className="w-full table-fixed border-separate border-spacing-0">
-        <colgroup>
-          <col className="w-[13%]" /> {/* Cliente */}
-          <col className="w-[9%]" /> {/* Tipo */}
-          <col className="w-[9%]" /> {/* NF */}
-          <col className="w-[9%]" /> {/* Placa */}
-          <col className="w-[13%]" /> {/* Transportadora */}
-          <col className="w-[7%]" /> {/* Chegada */}
-          <col className="w-[7%]" /> {/* Liberação */}
-          <col className="w-[9%]" /> {/* Aguardando */}
-          <col className="w-[10%]" /> {/* Status */}
-          <col className="w-[14%]" /> {/* Serviços */}
-        </colgroup>
-        <thead>
-          <tr>
-            {["Cliente", "Tipo", "NF", "Placa", "Transportadora", "Chegada", "Liberação", "Aguardando", "Status", "Serviços"].map(
-              (h) => (
-                <th
-                  key={h}
-                  className="text-left text-[11px] font-medium uppercase tracking-wide text-slate-400 px-3 py-2.5 border-b border-navy-50 truncate"
-                >
-                  {h}
-                </th>
-              )
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {operacoes.map((op) => {
-            const status = computeStatus(op, now);
-            const meta = STATUS_META[status];
-            return (
-              <tr
-                key={op.id}
-                onClick={readOnly ? undefined : () => onSelect?.(op.id)}
-                className={
-                  readOnly ? "" : "cursor-pointer hover:bg-mist/60 transition-colors align-top"
-                }
-              >
-                <td className="px-3 py-3 text-sm border-b border-navy-50 break-words">{op.cliente}</td>
-                <td className="px-3 py-3 border-b border-navy-50">
-                  <TipoBadge tipo={op.tipoOperacao} />
-                </td>
-                <td className="px-3 py-3 text-sm border-b border-navy-50">
-                  <NfCell nf={op.nf} />
-                </td>
-                <td className="px-3 py-3 text-sm border-b border-navy-50 font-medium break-words">{op.placa}</td>
-                <td className="px-3 py-3 text-sm border-b border-navy-50 text-slate-500 break-words">
-                  {op.transportadora ?? "—"}
-                </td>
-                <td className="px-3 py-3 text-sm border-b border-navy-50 tabular-nums">
-                  {op.horaChegada ?? "—"}
-                </td>
-                <td className="px-3 py-3 text-sm border-b border-navy-50 tabular-nums">
-                  {op.horaLiberacao ?? "—"}
-                </td>
-                <td className="px-3 py-3 border-b border-navy-50">
-                  <TempoAguardando op={op} now={now} />
-                </td>
-                <td className="px-3 py-3 border-b border-navy-50">
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${meta.classes}`}
+    <>
+      {/* Celular/tablet estreito: cards grandes, fáceis de ler de relance */}
+      <div className="md:hidden space-y-3">
+        {operacoes.map((op) => (
+          <MobileOperacaoCard
+            key={op.id}
+            op={op}
+            now={now}
+            clickable={!readOnly}
+            onClick={() => onSelect?.(op.id)}
+          />
+        ))}
+      </div>
+
+      {/* Desktop/tablet largo: tabela completa */}
+      <div className="hidden md:block bg-white rounded-xl shadow-card border border-navy-50 overflow-x-auto scrollbar-thin">
+        <table className="w-full table-fixed border-separate border-spacing-0">
+          <colgroup>
+            <col className="w-[13%]" /> {/* Cliente */}
+            <col className="w-[9%]" /> {/* Tipo */}
+            <col className="w-[9%]" /> {/* NF */}
+            <col className="w-[9%]" /> {/* Placa */}
+            <col className="w-[13%]" /> {/* Transportadora */}
+            <col className="w-[7%]" /> {/* Chegada */}
+            <col className="w-[7%]" /> {/* Liberação */}
+            <col className="w-[9%]" /> {/* Aguardando */}
+            <col className="w-[10%]" /> {/* Status */}
+            <col className="w-[14%]" /> {/* Serviços */}
+          </colgroup>
+          <thead>
+            <tr>
+              {["Cliente", "Tipo", "NF", "Placa", "Transportadora", "Chegada", "Liberação", "Aguardando", "Status", "Serviços"].map(
+                (h) => (
+                  <th
+                    key={h}
+                    className="text-left text-[11px] font-medium uppercase tracking-wide text-slate-400 px-3 py-2.5 border-b border-navy-50 truncate"
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
-                    {meta.label}
-                  </span>
-                </td>
-                <td className="px-3 py-3 border-b border-navy-50">
-                  <ServicosResumo servicos={op.servicos} />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+                    {h}
+                  </th>
+                )
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {operacoes.map((op) => {
+              const status = computeStatus(op, now);
+              const meta = STATUS_META[status];
+              return (
+                <tr
+                  key={op.id}
+                  onClick={readOnly ? undefined : () => onSelect?.(op.id)}
+                  className={
+                    readOnly ? "" : "cursor-pointer hover:bg-mist/60 transition-colors align-top"
+                  }
+                >
+                  <td className="px-3 py-3 text-sm border-b border-navy-50 break-words">{op.cliente}</td>
+                  <td className="px-3 py-3 border-b border-navy-50">
+                    <TipoBadge tipo={op.tipoOperacao} />
+                  </td>
+                  <td className="px-3 py-3 text-sm border-b border-navy-50">
+                    <NfCell nf={op.nf} />
+                  </td>
+                  <td className="px-3 py-3 text-sm border-b border-navy-50 font-medium break-words">{op.placa}</td>
+                  <td className="px-3 py-3 text-sm border-b border-navy-50 text-slate-500 break-words">
+                    {op.transportadora ?? "—"}
+                  </td>
+                  <td className="px-3 py-3 text-sm border-b border-navy-50 tabular-nums">
+                    {op.horaChegada ?? "—"}
+                  </td>
+                  <td className="px-3 py-3 text-sm border-b border-navy-50 tabular-nums">
+                    {op.horaLiberacao ?? "—"}
+                  </td>
+                  <td className="px-3 py-3 border-b border-navy-50">
+                    <TempoAguardando op={op} now={now} />
+                  </td>
+                  <td className="px-3 py-3 border-b border-navy-50">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${meta.classes}`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
+                      {meta.label}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3 border-b border-navy-50">
+                    <ServicosResumo servicos={op.servicos} />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
