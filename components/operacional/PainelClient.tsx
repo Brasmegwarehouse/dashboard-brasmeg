@@ -1,13 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { OperacaoRow } from "@/lib/operacoes-actions";
 import OperacoesTable from "./OperacoesTable";
 import OperacaoModal from "./OperacaoModal";
 
 export default function PainelClient({ operacoes, path }: { operacoes: OperacaoRow[]; path: string }) {
+  const router = useRouter();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const selected = operacoes.find((op) => op.id === selectedId) ?? null;
+
+  // Painel é uma tela pra ficar aberta o dia todo (celular da operação,
+  // TV do galpão etc.) — então busca dados novos sozinho a cada 15s,
+  // sem precisar de F5. Pausa o refresh enquanto o modal de fechamento
+  // está aberto, pra não sumir com o que a pessoa está digitando.
+  useEffect(() => {
+    if (selectedId !== null) return;
+    const t = setInterval(() => router.refresh(), 15_000);
+    return () => clearInterval(t);
+  }, [router, selectedId]);
 
   const finalizados = operacoes.filter((op) => op.horaSaida).length;
   const emOperacao = operacoes.filter((op) => op.horaChegada && !op.horaSaida).length;
