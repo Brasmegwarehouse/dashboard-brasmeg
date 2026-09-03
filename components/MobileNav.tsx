@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import NavContent from "@/components/NavContent";
+import LogoutButton from "@/components/LogoutButton";
 
 export default function MobileNav() {
   const [open, setOpen] = useState(false);
@@ -77,8 +78,9 @@ export default function MobileNav() {
 
             <NavContent onNavigate={() => setOpen(false)} />
 
-            <div className="px-6 py-4 border-t border-white/10 text-[11px] text-navy-100/50">
-              Protótipo · dados 2026
+            <div className="px-6 py-4 border-t border-white/10 space-y-3">
+              <LogoutButton variant="dark" />
+              <p className="text-[11px] text-navy-100/50">Protótipo · dados 2026</p>
             </div>
           </div>
         </div>

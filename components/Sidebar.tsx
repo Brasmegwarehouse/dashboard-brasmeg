@@ -1,5 +1,6 @@
 import Image from "next/image";
 import NavContent from "@/components/NavContent";
+import LogoutButton from "@/components/LogoutButton";
 
 export default function Sidebar() {
   return (
@@ -19,8 +20,9 @@ export default function Sidebar() {
 
       <NavContent />
 
-      <div className="px-6 py-4 border-t border-white/10 text-[11px] text-navy-100/50">
-        Protótipo · dados 2026
+      <div className="px-6 py-4 border-t border-white/10 space-y-3">
+        <LogoutButton variant="dark" />
+        <p className="text-[11px] text-navy-100/50">Protótipo · dados 2026</p>
       </div>
     </aside>
   );

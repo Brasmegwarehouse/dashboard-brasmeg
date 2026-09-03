@@ -2,6 +2,8 @@ import ExportButton from "@/components/ExportButton";
 import PainelClient from "@/components/operacional/PainelClient";
 import OperacionalTabs from "@/components/operacional/OperacionalTabs";
 import ExcelExportButton from "@/components/operacional/ExcelExportButton";
+import DataPicker from "@/components/operacional/DataPicker";
+import LogoutButton from "@/components/LogoutButton";
 import { getOperacoesByData } from "@/lib/operacoes-actions";
 import { operacoesParaLinhasExcel } from "@/lib/operacionalExport";
 import { getRole } from "@/lib/auth";
@@ -14,9 +16,13 @@ function todayISO() {
 
 const PATH = "/controle-operacional/painel";
 
-export default async function PainelPage() {
-  const data = todayISO();
-  const operacoes = await getOperacoesByData(data);
+export default async function PainelPage({ searchParams }: { searchParams: { data?: string } }) {
+  const hoje = todayISO();
+  const selectedData =
+    searchParams?.data && /^\d{4}-\d{2}-\d{2}$/.test(searchParams.data) ? searchParams.data : hoje;
+  const isHoje = selectedData === hoje;
+
+  const operacoes = await getOperacoesByData(selectedData);
   const role = getRole();
   const linhasExcel = operacoesParaLinhasExcel(operacoes);
 
@@ -31,14 +37,20 @@ export default async function PainelPage() {
             Clique num veículo lançado pra fechar a operação: horário de início, saída e serviços adicionais.
           </p>
         </div>
-        <div className="flex items-center gap-2 print:hidden">
+        <div className="flex items-center gap-2 print:hidden flex-wrap">
           {role === "geral" && <OperacionalTabs />}
-          <ExcelExportButton rows={linhasExcel} filename={`painel-${data}.xlsx`} sheetName="Painel do Dia" />
+          <DataPicker selected={selectedData} />
+          <ExcelExportButton
+            rows={linhasExcel}
+            filename={`painel-${selectedData}.xlsx`}
+            sheetName="Painel do Dia"
+          />
           <ExportButton />
+          <LogoutButton />
         </div>
       </header>
 
-      <PainelClient operacoes={operacoes} path={PATH} />
+      <PainelClient operacoes={operacoes} path={PATH} isHoje={isHoje} />
     </>
   );
 }
