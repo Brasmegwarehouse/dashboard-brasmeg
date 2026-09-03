@@ -154,7 +154,6 @@ export async function getResumoMensal(anoMes: string /* "YYYY-MM" */): Promise<R
   const inicio = `${anoMes}-01`;
   const fim = ultimoDiaDoMes(anoMes);
   const rows = await db.select().from(operacoes).where(and(gte(operacoes.data, inicio), lte(operacoes.data, fim)));
-
   const porDiaMap = new Map<string, { Carga: number; Descarga: number; Entrega: number }>();
   const porTipoMap = new Map<string, number>();
   const porClienteMap = new Map<string, number>();
@@ -182,4 +181,24 @@ export async function getResumoMensal(anoMes: string /* "YYYY-MM" */): Promise<R
     .slice(0, 8);
 
   return { porDia, porTipo, porCliente, totalOperacoes: rows.length };
+}
+
+/** Todas as operações lançadas num mês inteiro, com serviços — usado pra exportar o mês em Excel. */
+export async function getOperacoesByMes(anoMes: string /* "YYYY-MM" */): Promise<OperacaoRow[]> {
+  const inicio = `${anoMes}-01`;
+  const fim = ultimoDiaDoMes(anoMes);
+  const rows = await db.select().from(operacoes).where(and(gte(operacoes.data, inicio), lte(operacoes.data, fim)));
+  const ids = rows.map((r) => r.id);
+  const servicos = ids.length
+    ? await db.select().from(operacaoServicos).where(inArray(operacaoServicos.operacaoId, ids))
+    : [];
+
+  return rows
+    .map((r) => ({
+      ...r,
+      servicos: servicos
+        .filter((s) => s.operacaoId === r.id)
+        .map((s) => ({ id: s.id, servico: s.servico, quantidade: s.quantidade, descricao: s.descricao })),
+    }))
+    .sort((a, b) => a.data.localeCompare(b.data) || (a.horaChegada ?? "99:99").localeCompare(b.horaChegada ?? "99:99"));
 }

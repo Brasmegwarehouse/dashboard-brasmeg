@@ -1,7 +1,9 @@
 import ExportButton from "@/components/ExportButton";
 import PainelClient from "@/components/operacional/PainelClient";
 import OperacionalTabs from "@/components/operacional/OperacionalTabs";
+import ExcelExportButton from "@/components/operacional/ExcelExportButton";
 import { getOperacoesByData } from "@/lib/operacoes-actions";
+import { operacoesParaLinhasExcel } from "@/lib/operacionalExport";
 import { getRole } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +18,7 @@ export default async function PainelPage() {
   const data = todayISO();
   const operacoes = await getOperacoesByData(data);
   const role = getRole();
+  const linhasExcel = operacoesParaLinhasExcel(operacoes);
 
   return (
     <>
@@ -30,6 +33,7 @@ export default async function PainelPage() {
         </div>
         <div className="flex items-center gap-2 print:hidden">
           {role === "geral" && <OperacionalTabs />}
+          <ExcelExportButton rows={linhasExcel} filename={`painel-${data}.xlsx`} sheetName="Painel do Dia" />
           <ExportButton />
         </div>
       </header>

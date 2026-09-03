@@ -1,7 +1,9 @@
 import MesPicker from "@/components/operacional/MesPicker";
 import OperacionalTabs from "@/components/operacional/OperacionalTabs";
 import RelatoriosCharts from "@/components/operacional/RelatoriosCharts";
-import { getResumoMensal } from "@/lib/operacoes-actions";
+import ExcelExportButton from "@/components/operacional/ExcelExportButton";
+import { getResumoMensal, getOperacoesByMes } from "@/lib/operacoes-actions";
+import { operacoesParaLinhasExcel } from "@/lib/operacionalExport";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +13,8 @@ function currentMonthISO() {
 
 export default async function RelatoriosPage({ searchParams }: { searchParams: { mes?: string } }) {
   const mes = searchParams?.mes && /^\d{4}-\d{2}$/.test(searchParams.mes) ? searchParams.mes : currentMonthISO();
-  const resumo = await getResumoMensal(mes);
+  const [resumo, operacoesDoMes] = await Promise.all([getResumoMensal(mes), getOperacoesByMes(mes)]);
+  const linhasExcel = operacoesParaLinhasExcel(operacoesDoMes);
 
   return (
     <>
@@ -25,6 +28,7 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: {
         <div className="flex items-center gap-2">
           <OperacionalTabs />
           <MesPicker selected={mes} />
+          <ExcelExportButton rows={linhasExcel} filename={`operacoes-${mes}.xlsx`} sheetName="Mês" />
         </div>
       </header>
 
