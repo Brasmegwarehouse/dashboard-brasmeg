@@ -1,3 +1,4 @@
+import OperacionalHeader from "@/components/operacional/OperacionalHeader";
 import DataPicker from "@/components/operacional/DataPicker";
 import OperacionalTabs from "@/components/operacional/OperacionalTabs";
 import LancamentoClient from "@/components/operacional/LancamentoClient";
@@ -18,21 +19,18 @@ export default async function LancamentoPage({ searchParams }: { searchParams: {
 
   return (
     <>
-      <header className="static lg:sticky lg:top-0 z-10 bg-mist/90 lg:backdrop-blur border-b border-navy-50 px-6 lg:px-10 py-5 flex flex-wrap items-start justify-between gap-4">
-        <div className="max-w-2xl">
-          <h1 className="font-display text-xl font-semibold text-navy-700">Lançamento de Veículos</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Portaria/ADM: lança o veículo assim que atende, até o horário de liberação. Todos os campos são
-            obrigatórios.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <OperacionalTabs />
-          <DataPicker selected={selectedData} />
-        </div>
-      </header>
+      <OperacionalHeader
+        title="Lançamento de Veículos"
+        subtitle="Portaria/ADM: lança o veículo até a liberação. Todos os campos são obrigatórios."
+        actions={
+          <>
+            <OperacionalTabs />
+            <DataPicker selected={selectedData} />
+          </>
+        }
+      />
 
-      <main className="px-6 lg:px-10 py-8 max-w-6xl">
+      <main className="px-4 sm:px-6 lg:px-10 py-6 lg:py-8 max-w-6xl">
         <LancamentoClient operacoes={operacoes} data={selectedData} path={PATH} />
       </main>
     </>
