@@ -46,7 +46,7 @@ export default function PainelClient({
       )}
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <div className="bg-white rounded-xl shadow-card border border-navy-50 p-3 sm:p-4">
+        <div className="bg-white rounded-xl shadow-card border border-navy-50 border-t-4 border-t-brand-blue p-3 sm:p-4">
           <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-slate-500">
             Veículos
           </p>
@@ -54,7 +54,7 @@ export default function PainelClient({
             {operacoes.length}
           </p>
         </div>
-        <div className="bg-white rounded-xl shadow-card border border-navy-50 p-3 sm:p-4">
+        <div className="bg-white rounded-xl shadow-card border border-navy-50 border-t-4 border-t-brand-orange p-3 sm:p-4">
           <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-slate-500">
             Em operação
           </p>
@@ -62,7 +62,7 @@ export default function PainelClient({
             {emOperacao}
           </p>
         </div>
-        <div className="bg-white rounded-xl shadow-card border border-navy-50 p-3 sm:p-4">
+        <div className="bg-white rounded-xl shadow-card border border-navy-50 border-t-4 border-t-emerald-500 p-3 sm:p-4">
           <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-slate-500">
             Finalizados
           </p>
